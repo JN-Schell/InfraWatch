@@ -21,3 +21,7 @@ Initial development. Version `0.1.0` is the working version in the code but has 
 - Static/SPA handler validates the requested path (no NUL, backslash, absolute or `..` segments, symlink escape) before any filesystem access (#47).
 - Generated first-run admin password is written once to a mode-0600 file and is no longer logged (#48).
 - Replaced references to the vacated owner handle (`sch3lly-stack`) in CODEOWNERS, security links and roadmap with `JN-Schell` (#53).
+
+### Changed
+- CI now runs Ruff and mypy (`lint` job); existing findings fixed (#35). `ruff format` is intentionally not enforced yet.
+- Agent `flush()` is a no-op before registration; alert rules with a NULL threshold are skipped instead of raising; agent authentication uses one explicit 401 path for unknown/bad/revoked keys (#35).

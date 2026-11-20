@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
-from conftest import login, make_user, push, register_host, sample
+from conftest import make_user, push, register_host, sample
 
 
 def test_unauthenticated_api_rejected(client):

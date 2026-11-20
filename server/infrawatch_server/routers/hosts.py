@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import csv
 import io
+from collections.abc import Sequence
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
@@ -84,11 +85,11 @@ def overview(request: Request, include_simulated: bool = False, environment: str
     statuses = [host_status(h, now, s.offline_after_seconds) for h in hosts]
     alert_q = select(models.Alert).where(models.Alert.status != "resolved", models.Alert.host_id.in_(ids or [0]))
     open_alerts = db.scalars(alert_q).all()
-    attention_ids = {a.host_id for a in open_alerts} | {h.id for h, st in zip(hosts, statuses) if st == "offline"}
+    attention_ids = {a.host_id for a in open_alerts} | {h.id for h, st in zip(hosts, statuses, strict=True) if st == "offline"}
     latest = _latest_metrics(db, ids)
 
     def avg(field):
-        vals = [getattr(latest[h.id], field) for h, st in zip(hosts, statuses)
+        vals = [getattr(latest[h.id], field) for h, st in zip(hosts, statuses, strict=True)
                 if st == "online" and h.id in latest and getattr(latest[h.id], field) is not None]
         return round(sum(vals) / len(vals), 1) if vals else None
 
@@ -123,7 +124,7 @@ def get_host(host_id: int, request: Request, _: Principal = Depends(current_user
     s = request.app.state.settings
     latest = _latest_metrics(db, [h.id]).get(h.id)
     n = db.scalar(select(func.count()).select_from(models.Alert).where(
-        models.Alert.host_id == h.id, models.Alert.status != "resolved"))
+        models.Alert.host_id == h.id, models.Alert.status != "resolved")) or 0
     d = host_dict(h, utcnow(), s.offline_after_seconds, latest, n)
     d["agent_outdated"] = bool(h.agent_version) and h.agent_version != s.latest_agent_version
     return d
@@ -163,7 +164,7 @@ def _range(range_: str, start: datetime | None, end: datetime | None) -> tuple[d
     return start, end
 
 
-def _bucketed(rows: list[models.Metric], start: datetime, end: datetime, max_points: int) -> list[dict]:
+def _bucketed(rows: Sequence[models.Metric], start: datetime, end: datetime, max_points: int) -> list[dict]:
     """Downsample by averaging into at most max_points time buckets (DB-agnostic)."""
     span = (end - start).total_seconds()
     size = max(1, int(span / max_points))
@@ -173,7 +174,7 @@ def _bucketed(rows: list[models.Metric], start: datetime, end: datetime, max_poi
     out = []
     for k in sorted(buckets):
         ms = buckets[k]
-        point = {"ts": start + timedelta(seconds=k * size)}
+        point: dict[str, Any] = {"ts": start + timedelta(seconds=k * size)}
         for f in METRIC_FIELDS:
             vals = [getattr(m, f) for m in ms if getattr(m, f) is not None]
             point[f] = round(sum(vals) / len(vals), 3) if vals else None

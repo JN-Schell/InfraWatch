@@ -75,14 +75,14 @@ def create_channel(body: schemas.ChannelIn, request: Request, p: Principal = Dep
     try:
         validate_webhook_url(body.url, request.app.state.settings.allow_private_webhooks)
     except ValueError as exc:
-        raise HTTPException(422, str(exc))
+        raise HTTPException(422, str(exc)) from exc
     c = models.NotificationChannel(kind="webhook", **body.model_dump())
     db.add(c)
     try:
         db.flush()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(409, "a channel with that name exists")
+        raise HTTPException(409, "a channel with that name exists") from None
     audit(db, p.username, "channel.create", f"channel:{c.id}", client_ip(request), name=c.name)
     db.commit()
     return row(c)
@@ -162,7 +162,7 @@ def create_user(body: schemas.UserCreate, request: Request, p: Principal = Depen
         db.flush()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(409, "username already exists")
+        raise HTTPException(409, "username already exists") from None
     audit(db, p.username, "user.create", f"user:{u.username}", client_ip(request), role=u.role)
     db.commit()
     return row(u, "password_hash")

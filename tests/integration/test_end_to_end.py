@@ -1,13 +1,9 @@
 """Real agent <-> real server (uvicorn) over real sockets."""
-import threading
-import time
 
-import httpx
 import pytest
 
-from infrawatch_agent.agent import Agent, register
-from infrawatch_agent.client import ServerClient
-from infrawatch_agent.config import AgentConfig, CheckConfig, ConfigError, validate
+from infrawatch_agent.agent import Agent
+from infrawatch_agent.config import AgentConfig, CheckConfig
 
 
 def agent_cfg(live, tmp_path, token=None, **kw):
@@ -96,7 +92,8 @@ def test_revoked_agent_is_rejected(live, tmp_path):
 def test_two_agents_one_server_are_isolated(live, tmp_path):
     a = Agent(agent_cfg(live, tmp_path / "a", token=live.enrollment_token("prod")))
     b = Agent(agent_cfg(live, tmp_path / "b", token=live.enrollment_token("staging")))
-    a.run(max_iterations=1); b.run(max_iterations=1)
+    a.run(max_iterations=1)
+    b.run(max_iterations=1)
     h = hosts(live)
     assert len(h) == 2 and {x["environment"] for x in h} == {"prod", "staging"} and all(x["status"] == "online" for x in h)
 

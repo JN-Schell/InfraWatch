@@ -74,8 +74,8 @@ def authenticated_host(request: Request, db: Session = Depends(get_db)) -> model
     host_id, secret = parsed
     request.app.state.limiter.check(f"ingest:{host_id}", request.app.state.settings.rate_limit_ingest_per_min)
     host = db.get(models.Host, host_id)
-    ok = host is not None and constant_time_eq(host.api_key_hash, sha256_hex(secret))
-    if not ok or host.revoked:
+    # Same 401 for unknown host, bad secret and revoked key (no oracle for which one failed).
+    if host is None or not constant_time_eq(host.api_key_hash, sha256_hex(secret)) or host.revoked:
         raise HTTPException(401, "invalid agent credentials")
     return host
 

@@ -61,7 +61,7 @@ Agents may complete their own PRs but must not pretend independent review happen
 
 1. Read the full diff; check for unintended files, secrets, duplicated or dead code.
 2. Verify every acceptance criterion; consider security implications.
-3. Run locally and record results in the PR: Python `ruff check`, `mypy` (once #35 lands), `pytest server/tests`, `pytest agent/tests`, `pytest tests/integration`;
+3. Run locally and record results in the PR: Python `ruff check`, `mypy server/infrawatch_server agent/infrawatch_agent`, `pytest server/tests`, `pytest agent/tests`, `pytest tests/integration`;
    frontend `npm run build`, `npx playwright test` (and lint/unit tests once #7 lands).
 4. Review migrations when schemas change.
 5. Required GitHub Actions checks are green; no merge conflicts; no unresolved blocking comments.
@@ -92,13 +92,14 @@ docs/ROADMAP.md. Record significant architectural decisions as ADRs in `docs/adr
 ## 10. Project commands
 ```bash
 # setup
-python3 -m venv .venv && . .venv/bin/activate && pip install -e "server[dev]" -e "agent[dev]" ruff
+python3 -m venv .venv && . .venv/bin/activate && pip install -e "server[dev]" -e "agent[dev]"   # includes ruff, mypy
 cd frontend && npm ci && npx playwright install chromium
 
 # test (run suites separately: each has its own conftest.py)
 pytest server/tests ; pytest agent/tests ; pytest tests/integration
 cd frontend && npm run build && npx playwright test        # PYTHON=.venv/bin/python is picked up by scripts/e2e_server.sh
-ruff check server agent tests                                # config arrives in #35
+ruff check server agent tests                                # config: ruff.toml
+mypy server/infrawatch_server agent/infrawatch_agent         # config: mypy.ini (application packages only)
 ```
 Server tests run on SQLite by default; set `INFRAWATCH_TEST_DATABASE_URL=postgresql://…` for PostgreSQL.
 
@@ -114,7 +115,7 @@ The owner account was later renamed from `sch3lly-stack` to `JN-Schell` (same us
 username-form noreply address, and history is intentionally not rewritten.
 
 ## 13. Repository settings (enforced by GitHub, applied 2026-11-13)
-`main` is protected: pull requests required, status checks required (`python-tests (3.11/3.12/3.13)`, `postgres-tests`, `frontend`, `docker`),
+`main` is protected: pull requests required, status checks required (`lint`, `python-tests (3.11/3.12/3.13)`, `postgres-tests`, `frontend`, `docker`),
 linear history, conversations must be resolved, force-push and deletion disabled, **enforced for administrators too** (so the owner's credentials cannot
 silently bypass it). **No independent approval is required** because this is a single-maintainer project operated with an autonomous agent: CI and PRs are
 the gate, and self-review is documented honestly. Only squash merging is enabled; merged branches are deleted automatically. Dependabot alerts and security

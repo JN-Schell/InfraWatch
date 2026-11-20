@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,8 +26,8 @@ def app():
     app = create_app(s)
     app.state.notifier = FakeNotifier()
     if s.database_url != "sqlite://":  # start every test from an empty schema on a real server DB
-        from infrawatch_server.db import Base
         from infrawatch_server import models  # noqa: F401
+        from infrawatch_server.db import Base
         Base.metadata.drop_all(app.state.db.engine)
     yield app
     if s.database_url != "sqlite://":

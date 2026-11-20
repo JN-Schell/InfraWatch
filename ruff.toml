@@ -1,0 +1,17 @@
+# Ruff configuration for server/, agent/ and tests/ (issue #35)
+line-length = 120
+target-version = "py311"
+extend-exclude = ["frontend", ".venv"]
+
+[lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = [
+  "E501",  # line length is handled by the formatter style, not enforced as an error
+]
+
+[lint.flake8-bugbear]
+# FastAPI dependency declarations in default arguments are the framework idiom, not a bug.
+extend-immutable-calls = ["infrawatch_server.deps.require_role", "fastapi.Depends", "fastapi.Query", "fastapi.Header", "fastapi.Body"]
+
+[lint.isort]
+known-first-party = ["infrawatch_server", "infrawatch_agent"]

@@ -8,7 +8,6 @@ import random
 import signal
 import threading
 import time
-from pathlib import Path
 
 from . import __version__
 from .buffer import SampleBuffer
@@ -98,11 +97,14 @@ class Agent:
 
     def flush(self) -> bool:
         """Send buffered samples in batches. Returns True if the buffer was fully drained."""
+        api_key = self.api_key
+        if not api_key:
+            return False  # not registered yet; samples stay buffered
         while len(self.buffer) and not self.stop_event.is_set():
             batch = self.buffer.peek(self.cfg.batch_size)
             ids = [i for i, _ in batch]
             try:
-                resp = self.client.send(self.api_key, self.info, [s for _, s in batch], self.cfg.interval)
+                resp = self.client.send(api_key, self.info, [s for _, s in batch], self.cfg.interval)
             except TransientError as exc:
                 self.consecutive_failures += 1
                 log.warning("send failed, will retry", extra={"ctx": {"error": str(exc), "buffered": len(self.buffer),
