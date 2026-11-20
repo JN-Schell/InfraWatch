@@ -20,3 +20,4 @@ Initial development. Version `0.1.0` is the working version in the code but has 
 ### Security
 - Static/SPA handler validates the requested path (no NUL, backslash, absolute or `..` segments, symlink escape) before any filesystem access (#47).
 - Generated first-run admin password is written once to a mode-0600 file and is no longer logged (#48).
+- Replaced references to the vacated owner handle (`sch3lly-stack`) in CODEOWNERS, security links and roadmap with `JN-Schell` (#53).

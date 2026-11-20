@@ -86,6 +86,8 @@ docs/ROADMAP.md. Record significant architectural decisions as ADRs in `docs/adr
 * Structured JSON logging; no sensitive values in logs.
 * Simulated data stays flagged `is_simulated` and separate from real data. Do not claim a host is monitored unless its agent has actually reported.
 * Report outcomes truthfully: say what was verified and what was not.
+* Identity hygiene: never hardcode the owner handle in new files; derive it (`gh repo view --json owner`). Agent commits use the id-based GitHub noreply
+  address (`<id>+<login>@users.noreply.github.com`, which survives renames) and never a personal email.
 
 ## 10. Project commands
 ```bash
@@ -108,6 +110,8 @@ Routine implementation decisions do **not** require asking.
 ## 12. Known deviations from this process (history)
 The initial code (commit `f13e87c`) was pushed directly to `main` before this workflow existed. The issues for that work (#22 to #32) were created
 retroactively and say so.
+The owner account was later renamed from `sch3lly-stack` to `JN-Schell` (same user id); references were updated in #53. The earliest commits carry the old
+username-form noreply address, and history is intentionally not rewritten.
 
 ## 13. Repository settings (enforced by GitHub, applied 2026-11-13)
 `main` is protected: pull requests required, status checks required (`python-tests (3.11/3.12/3.13)`, `postgres-tests`, `frontend`, `docker`),
