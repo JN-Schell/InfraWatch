@@ -90,7 +90,10 @@ def test_checks():
     r = run_check(CheckConfig("bad", "http", f"http://127.0.0.1:{port}/fail"))
     assert not r["ok"] and r["status_code"] == 500 and r["error"] == "HTTP 500"
     assert run_check(CheckConfig("tcp", "tcp", f"127.0.0.1:{port}"))["ok"]
-    s = socket.socket(); s.bind(("127.0.0.1", 0)); closed = s.getsockname()[1]; s.close()
+    s = socket.socket()
+    s.bind(("127.0.0.1", 0))
+    closed = s.getsockname()[1]
+    s.close()
     r = run_check(CheckConfig("closed", "tcp", f"127.0.0.1:{closed}"))
     assert not r["ok"]
     r = run_check(CheckConfig("down", "http", f"http://127.0.0.1:{closed}/", timeout=1))
@@ -178,7 +181,18 @@ def test_agent_payload_contains_only_resource_metrics(tmp_path):
         return httpx.Response(200, json={"accepted": 1})
 
     a, _ = make_agent(tmp_path, handler)
-    a.collect_once(); a.flush()
+    a.collect_once()
+    a.flush()
     assert set(seen["body"]) == {"agent", "samples"}
     assert set(seen["body"]["agent"]) <= {"hostname", "os", "os_version", "arch", "agent_version", "collection_interval"}
     assert set(seen["body"]["samples"][0]) == {"ts", "system", "checks"}
+
+
+def test_flush_before_registration_keeps_samples(tmp_path):
+    def handler(req):  # must never be called
+        raise AssertionError("no request expected without an API key")
+
+    a, _ = make_agent(tmp_path, handler)
+    a.api_key = None
+    a.collect_once()
+    assert a.flush() is False and len(a.buffer) == 1

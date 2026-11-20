@@ -5,6 +5,7 @@ import stat
 
 import pytest
 from fastapi.testclient import TestClient
+
 from infrawatch_server import models
 from infrawatch_server.config import Settings
 from infrawatch_server.db import Database

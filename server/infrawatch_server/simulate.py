@@ -15,7 +15,7 @@ import random
 import secrets
 from datetime import timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 
 from . import models
 from .alerts import evaluate

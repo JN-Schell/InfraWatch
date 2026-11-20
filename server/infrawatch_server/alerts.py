@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime, timedelta
 
-from sqlalchemy import and_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import models
@@ -82,17 +82,20 @@ def _sustained(db: Session, host: models.Host, now: datetime, for_seconds: int, 
 def _conditions(db: Session, rule: models.AlertRule, host: models.Host, now: datetime, settings: Settings):
     """Yield (subject, violated, value, title, message)."""
     t = rule.type
+    if t not in ("host_down", "service_down") and rule.threshold is None:
+        return  # misconfigured rule (the API validates this; the database does not): nothing to compare against
+    thr: float = rule.threshold if rule.threshold is not None else 0.0
     if t in ("cpu_high", "mem_high"):
         col = models.Metric.cpu_percent if t == "cpu_high" else models.Metric.mem_percent
         label = "CPU" if t == "cpu_high" else "Memory"
-        v, val = _sustained(db, host, now, rule.for_seconds, col, lambda x: x > rule.threshold)
+        v, val = _sustained(db, host, now, rule.for_seconds, col, lambda x: x > thr)
         yield "", v, val, f"{label} high on {host.hostname}", (
-            f"{label} utilization {val:.1f}% exceeds {rule.threshold:g}%" if val is not None else "")
+            f"{label} utilization {val:.1f}% exceeds {thr:g}%" if val is not None else "")
     elif t == "disk_low":
-        col = 100 - models.Metric.disk_percent
-        v, val = _sustained(db, host, now, rule.for_seconds, col, lambda x: x < rule.threshold)
+        free_pct = 100 - models.Metric.disk_percent
+        v, val = _sustained(db, host, now, rule.for_seconds, free_pct, lambda x: x < thr)
         yield "", v, val, f"Low disk space on {host.hostname}", (
-            f"Free disk space {val:.1f}% is below {rule.threshold:g}%" if val is not None else "")
+            f"Free disk space {val:.1f}% is below {thr:g}%" if val is not None else "")
     elif t == "host_down":
         status = host_status(host, now, settings.offline_after_seconds)
         yield "", status == "offline", None, f"Host {host.hostname} is unavailable", (
@@ -114,9 +117,9 @@ def _conditions(db: Session, rule: models.AlertRule, host: models.Host, now: dat
                 yield name, not c.ok, None, f"Service {name} down on {host.hostname}", (
                     f"{c.kind} check {c.target} failed: {c.error or 'unhealthy'}")
             else:
-                slow = c.ok and c.response_ms is not None and c.response_ms > rule.threshold
+                slow = c.ok and c.response_ms is not None and c.response_ms > thr
                 yield name, slow, c.response_ms, f"Slow response from {name} on {host.hostname}", (
-                    f"Response time {c.response_ms:.0f} ms exceeds {rule.threshold:g} ms" if c.response_ms else "")
+                    f"Response time {c.response_ms:.0f} ms exceeds {thr:g} ms" if c.response_ms else "")
 
 
 def evaluate(db: Session, settings: Settings, notifier: Notifier, now: datetime) -> dict:
@@ -181,10 +184,10 @@ def evaluate(db: Session, settings: Settings, notifier: Notifier, now: datetime)
     for alert in db.scalars(select(models.Alert).where(models.Alert.status != "resolved")).all():
         if alert.fingerprint in evaluated_fps:
             continue
-        rule = db.get(models.AlertRule, alert.rule_id) if alert.rule_id else None
+        alert_rule = db.get(models.AlertRule, alert.rule_id) if alert.rule_id else None
         host = alert.host
-        stale = rule is None or not rule.enabled or host.revoked
-        if not stale and rule.type in ("service_down", "response_slow"):
+        stale = alert_rule is None or not alert_rule.enabled or host.revoked
+        if not stale and alert_rule is not None and alert_rule.type in ("service_down", "response_slow"):
             stale = True  # service no longer reporting within the window
         if stale:
             _resolve(alert, "system", now)

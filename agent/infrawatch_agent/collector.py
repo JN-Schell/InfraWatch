@@ -35,7 +35,7 @@ class SystemCollector:
         except OSError:
             disk = {"disk_percent": None, "disk_free_bytes": None, "disk_total_bytes": None}
         sent, recv = self._net_rates()
-        load = (None, None, None)
+        load: tuple[float | None, float | None, float | None] = (None, None, None)
         if hasattr(os, "getloadavg"):  # unavailable on Windows
             try:
                 load = os.getloadavg()

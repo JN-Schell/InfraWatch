@@ -97,8 +97,6 @@ def test_upgrade_flag(client, admin, app):
 
 def test_simulator_seeds_flagged_data_and_purges(client, admin, app):
     from infrawatch_server import simulate
-    from infrawatch_server.alerts import evaluate
-    from infrawatch_server.models import utcnow
     register_host(client, admin, "real-1")
     simulate.seed(app.state.db, hosts=4, hours=2, interval=60)
     assert len(client.get("/api/v1/hosts", headers=admin).json()) == 1  # real data unaffected

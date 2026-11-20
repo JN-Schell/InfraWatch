@@ -1,15 +1,12 @@
 """Agent-facing endpoints: registration and metric ingestion."""
 from __future__ import annotations
 
-from datetime import timedelta
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
-from ..alerts import host_status
-from ..deps import audit, authenticated_host, client_ip, get_db, _bearer
+from ..deps import _bearer, audit, authenticated_host, client_ip, get_db
 from ..models import utcnow
 from ..security import make_agent_key, new_secret, sha256_hex
 from ..versioning import version_tuple

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from conftest import push, register_host, sample
+
 from infrawatch_server import models
 from infrawatch_server.alerts import evaluate
 
@@ -197,3 +198,16 @@ def test_report_summary(client, admin):
     push(client, key, sample(cpu=40), sample(ts=datetime.now(timezone.utc) - timedelta(seconds=15), cpu=60))
     rep = client.get("/api/v1/reports/summary?range=24h", headers=admin).json()
     assert rep["hosts"][0]["avg_cpu"] == 50.0 and rep["hosts"][0]["max_cpu"] == 60.0
+
+
+def test_rule_with_null_threshold_is_ignored_not_crashing(client, admin, app):
+    """The API validates thresholds, but the DB does not: a bad row must not break evaluation for everyone else."""
+    _, key = register_host(client, admin)
+    with app.state.db.session() as s:
+        s.add(models.AlertRule(name="bad", type="cpu_high", threshold=None, severity="critical"))
+        s.commit()
+    rule(client, admin, name="good")
+    push(client, key, sample(cpu=99))
+    st = run(app)
+    assert st["opened"] == 1  # only the valid rule fired
+    assert [a["title"] for a in alerts(client, admin)] == ["CPU high on web-1"]
