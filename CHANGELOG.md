@@ -25,3 +25,4 @@ Initial development. Version `0.1.0` is the working version in the code but has 
 ### Changed
 - CI now runs Ruff and mypy (`lint` job); existing findings fixed (#35). `ruff format` is intentionally not enforced yet.
 - Agent `flush()` is a no-op before registration; alert rules with a NULL threshold are skipped instead of raising; agent authentication uses one explicit 401 path for unknown/bad/revoked keys (#35).
+- PostgreSQL/TimescaleDB-only tests: hypertable creation is asserted (CI fails if the extension is missing), plus UTC timestamp round-trip, restart idempotency and case-insensitive host search (#1).
