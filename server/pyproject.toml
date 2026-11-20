@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-timeout"]
+dev = ["pytest>=8", "pytest-timeout", "ruff>=0.6", "mypy>=1.10", "types-PyYAML"]
 
 [tool.setuptools.packages.find]
 include = ["infrawatch_server*"]

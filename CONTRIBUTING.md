@@ -12,7 +12,7 @@ Thanks for helping! The full engineering rules are in [AGENTS.md](AGENTS.md); th
 ## Development setup
 ```bash
 python3 -m venv .venv && . .venv/bin/activate
-pip install -e "server[dev]" -e "agent[dev]" ruff
+pip install -e "server[dev]" -e "agent[dev]"   # includes ruff and mypy
 (cd frontend && npm ci && npx playwright install chromium)
 ```
 
@@ -22,6 +22,7 @@ pytest server/tests          # SQLite by default
 pytest agent/tests
 pytest tests/integration     # real agent <-> real server incl. TLS
 ruff check server agent tests
+mypy server/infrawatch_server agent/infrawatch_agent   # tests are linted but not type-checked
 cd frontend && npm run build && npx playwright test
 ```
 PostgreSQL: `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=ci timescale/timescaledb:latest-pg16` then
