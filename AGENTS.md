@@ -115,7 +115,7 @@ The owner account was later renamed from `sch3lly-stack` to `JN-Schell` (same us
 username-form noreply address, and history is intentionally not rewritten.
 
 ## 13. Repository settings (enforced by GitHub, applied 2026-11-13)
-`main` is protected: pull requests required, status checks required (`python-tests (3.11/3.12/3.13)`, `postgres-tests`, `frontend`, `docker`),
+`main` is protected: pull requests required, status checks required (`lint`, `python-tests (3.11/3.12/3.13)`, `postgres-tests`, `frontend`, `docker`),
 linear history, conversations must be resolved, force-push and deletion disabled, **enforced for administrators too** (so the owner's credentials cannot
 silently bypass it). **No independent approval is required** because this is a single-maintainer project operated with an autonomous agent: CI and PRs are
 the gate, and self-review is documented honestly. Only squash merging is enabled; merged branches are deleted automatically. Dependabot alerts and security
