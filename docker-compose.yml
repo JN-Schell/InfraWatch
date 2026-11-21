@@ -38,6 +38,8 @@ services:
     image: caddy:2
     restart: unless-stopped
     depends_on: [server]
+    environment:
+      INFRAWATCH_HOSTNAME: ${INFRAWATCH_HOSTNAME:-localhost}
     ports: ["443:443"]
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
