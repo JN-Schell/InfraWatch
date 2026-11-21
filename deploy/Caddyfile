@@ -1,8 +1,9 @@
-# Internal CA for lab use. For a public hostname replace with: monitor.example.com { reverse_proxy server:8000 }
+# Lab/internal CA by default. Set INFRAWATCH_HOSTNAME in .env to the name clients use (default: localhost);
+# for a public hostname with Let's Encrypt, drop "tls internal" and the global local_certs block.
 {
 	local_certs
 }
-:443 {
+{$INFRAWATCH_HOSTNAME:localhost} {
 	tls internal
 	reverse_proxy server:8000
 }

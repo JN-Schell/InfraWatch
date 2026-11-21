@@ -82,3 +82,13 @@ jobs:
       - run: docker build -t infrawatch:ci .
       - name: Compose file validates
         run: POSTGRES_PASSWORD=x INFRAWATCH_SECRET_KEY=x INFRAWATCH_ADMIN_PASSWORD=x docker compose config -q
+  compose-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install ./agent
+      - name: Docker Compose end-to-end smoke test
+        run: scripts/compose_smoke.sh

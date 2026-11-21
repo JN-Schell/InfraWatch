@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 Initial development. Version `0.1.0` is the working version in the code but has **not yet been tagged or released** (tracked in #21).
 
 ### Added
+- `compose-smoke` CI job and `scripts/compose_smoke.sh`: brings up the Compose stack, enrolls a real agent over HTTP and over the Caddy TLS profile (with `ca_bundle`) and asserts the host goes online; also checks read-only rootfs and non-root (#2).
 - Central FastAPI server with REST API, PostgreSQL/TimescaleDB-ready schema and static dashboard hosting (#22).
 - Idempotent, validated metric ingestion (#23).
 - One-time enrollment tokens and per-host API keys; agents cannot impersonate other hosts (#24).
@@ -23,6 +24,7 @@ Initial development. Version `0.1.0` is the working version in the code but has 
 - Replaced references to the vacated owner handle (`sch3lly-stack`) in CODEOWNERS, security links and roadmap with `JN-Schell` (#53).
 
 ### Changed
+- Caddy site address is now `INFRAWATCH_HOSTNAME` (default `localhost`); the previous nameless `:443` site did not serve TLS for SNI clients (#2).
 - CI now runs Ruff and mypy (`lint` job); existing findings fixed (#35). `ruff format` is intentionally not enforced yet.
 - Agent `flush()` is a no-op before registration; alert rules with a NULL threshold are skipped instead of raising; agent authentication uses one explicit 401 path for unknown/bad/revoked keys (#35).
 - PostgreSQL/TimescaleDB-only tests: hypertable creation is asserted (CI fails if the extension is missing), plus UTC timestamp round-trip, restart idempotency and case-insensitive host search (#1).
