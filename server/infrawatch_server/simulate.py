@@ -117,7 +117,7 @@ def main() -> None:
     ap.add_argument("--purge", action="store_true", help="delete all simulated hosts and their data")
     args = ap.parse_args()
     db = Database(get_settings().database_url)
-    db.create_all()
+    db.migrate()
     if args.purge:
         print(f"removed {purge(db)} simulated hosts")
         return

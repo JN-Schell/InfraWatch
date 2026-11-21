@@ -23,7 +23,7 @@ def test_server_runs_on_postgresql(client, app):
 
 
 def test_time_series_tables_are_hypertables(client, app):
-    """`client` starts the app lifespan, which runs create_all() and the best-effort hypertable conversion."""
+    """`client` starts the app lifespan, which runs the migrations (incl. the hypertable conversion)."""
     with app.state.db.engine.connect() as conn:
         if not _has_timescale(conn):
             if EXPECT_TIMESCALE:
@@ -34,10 +34,10 @@ def test_time_series_tables_are_hypertables(client, app):
 
 
 def test_hypertable_conversion_is_idempotent_across_restarts(client, app):
-    """Starting the app again on an existing schema must not fail (create_hypertable uses if_not_exists)."""
+    """Starting the app again on an existing schema must not fail (migrations are a no-op at head)."""
     from infrawatch_server.db import Database
 
-    Database(app.state.settings.database_url).create_all()
+    Database(app.state.settings.database_url).migrate()
 
 
 def test_timestamps_roundtrip_as_utc_on_postgres(client, admin, app):

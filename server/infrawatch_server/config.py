@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="INFRAWATCH_", env_file=".env", extra="ignore")
 
     database_url: str = "sqlite:///./infrawatch.db"
+    auto_migrate: bool = True  # run Alembic migrations to head on startup; set false to run them yourself
     secret_key: str = ""  # JWT signing key. Generated (ephemeral) if empty.
     admin_username: str = "admin"
     admin_password: str = ""  # If empty and no admin exists, a random password is written to initial_password_file.

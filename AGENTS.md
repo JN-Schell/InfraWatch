@@ -82,7 +82,7 @@ docs/ROADMAP.md. Record significant architectural decisions as ADRs in `docs/adr
 * Tests for every behaviour change; bug fixes start with a failing test. Never hide failing tests or unresolved security concerns.
 * Security: validate input at boundaries, no secrets in code/logs/commits (`.env` is git-ignored), least privilege, audit significant actions, keep the agent's
   data collection minimal (no files, user names or command lines).
-* Database changes use migrations once Alembic lands (#5); until then, note schema changes explicitly in the PR.
+* Database changes use Alembic migrations (`docs/DATABASE.md`): every `models.py` schema change ships a reviewed revision, and `server/tests/test_migrations.py` fails if they drift.
 * Structured JSON logging; no sensitive values in logs.
 * Simulated data stays flagged `is_simulated` and separate from real data. Do not claim a host is monitored unless its agent has actually reported.
 * Report outcomes truthfully: say what was verified and what was not.

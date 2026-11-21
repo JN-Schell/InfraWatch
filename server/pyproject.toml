@@ -12,6 +12,7 @@ dependencies = [
   "fastapi>=0.110",
   "uvicorn[standard]>=0.29",
   "sqlalchemy>=2.0",
+  "alembic>=1.13",
   "pydantic>=2.6",
   "pydantic-settings>=2.2",
   "argon2-cffi>=23.1",
@@ -25,6 +26,9 @@ dev = ["pytest>=8", "pytest-timeout", "ruff>=0.6", "mypy>=1.10", "types-PyYAML"]
 
 [tool.setuptools.packages.find]
 include = ["infrawatch_server*"]
+
+[tool.setuptools.package-data]
+"infrawatch_server.migrations" = ["script.py.mako"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

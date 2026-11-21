@@ -58,7 +58,7 @@ def test_existing_password_file_is_not_overwritten(tmp_path, caplog):
     os.chmod(path, 0o640)
     settings = _settings(path)
     db = Database(settings.database_url)
-    db.create_all()
+    db.migrate()
     with caplog.at_level(logging.DEBUG, logger="infrawatch"), pytest.raises(FileExistsError):
         bootstrap_admin(db, settings)
     assert path.read_text(encoding="utf-8") == original
@@ -72,7 +72,7 @@ def test_second_start_does_not_rewrite_password_file(tmp_path, caplog):
     path = tmp_path / "initial-admin-password.txt"
     settings = _settings(path)
     db = Database(settings.database_url)
-    db.create_all()
+    db.migrate()
     bootstrap_admin(db, settings)
     password = path.read_text(encoding="utf-8").strip()
     mode = stat.S_IMODE(path.stat().st_mode)
