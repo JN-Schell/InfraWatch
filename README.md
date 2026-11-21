@@ -157,7 +157,9 @@ open http://localhost:8000    # log in as admin / your INFRAWATCH_ADMIN_PASSWORD
 ```
 
 For HTTPS: `docker compose --profile tls up -d` (Caddy on :443; see `deploy/Caddyfile`) and set
-`INFRAWATCH_TRUST_PROXY_HEADERS=true`. Don't expose plain-HTTP port 8000 beyond localhost in production.
+`INFRAWATCH_TRUST_PROXY_HEADERS=true`. Caddy serves `INFRAWATCH_HOSTNAME` (default `localhost`) with its internal CA;
+agents then need `ca_bundle` pointing at Caddy's root cert (`/data/caddy/pki/authorities/local/root.crt` in the `caddy` container).
+Both paths are exercised in CI by `scripts/compose_smoke.sh`. Don't expose plain-HTTP port 8000 beyond localhost in production.
 
 ## Quick start (local, no Docker; SQLite)
 
