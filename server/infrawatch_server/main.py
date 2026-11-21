@@ -102,7 +102,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI):
-        db.create_all()
+        if settings.auto_migrate:
+            db.migrate()
         bootstrap_admin(db, settings)
         task = asyncio.create_task(_loop(app)) if settings.run_background_tasks else None
         yield

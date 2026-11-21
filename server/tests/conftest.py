@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import text
 
 from infrawatch_server.config import Settings
 from infrawatch_server.main import create_app
@@ -29,6 +30,8 @@ def app():
         from infrawatch_server import models  # noqa: F401
         from infrawatch_server.db import Base
         Base.metadata.drop_all(app.state.db.engine)
+        with app.state.db.engine.begin() as c:
+            c.execute(text("DROP TABLE IF EXISTS alembic_version"))
     yield app
     if s.database_url != "sqlite://":
         app.state.db.engine.dispose()

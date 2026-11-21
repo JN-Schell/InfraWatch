@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from sqlalchemy import create_engine, event
+from pathlib import Path
+
+from sqlalchemy import create_engine, event, inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from sqlalchemy.pool import StaticPool
+
+BASELINE_REVISION = "0001"  # schema as of v0.1, created by create_all() before migrations existed
 
 
 class Base(DeclarativeBase):
@@ -32,33 +36,24 @@ class Database:
         self.engine = make_engine(url)
         self.sessionmaker = sessionmaker(self.engine, expire_on_commit=False)
 
-    def create_all(self) -> None:
-        from . import models  # noqa: F401
+    def migrate(self) -> None:
+        """Bring the schema to the latest Alembic revision.
 
-        Base.metadata.create_all(self.engine)
-        if self.engine.dialect.name == "postgresql":
-            _enable_timescale(self.engine)
+        A database created by the pre-migration `create_all()` (tables but no `alembic_version`) is adopted by stamping it
+        at the baseline revision, so existing deployments upgrade in place instead of failing on "table already exists".
+        """
+        from alembic import command
+        from alembic.config import Config
+
+        cfg = Config()
+        cfg.set_main_option("script_location", str(Path(__file__).parent / "migrations"))
+        tables = set(inspect(self.engine).get_table_names())
+        with self.engine.begin() as conn:
+            cfg.attributes["connection"] = conn
+            if "alembic_version" not in tables and "hosts" in tables:
+                command.stamp(cfg, BASELINE_REVISION)
+            command.upgrade(cfg, "head")
 
     def session(self) -> Session:
         return self.sessionmaker()
 
-
-def _enable_timescale(engine: Engine) -> None:
-    """Best effort: convert metrics/service_checks to hypertables if TimescaleDB is present."""
-    import logging
-
-    from sqlalchemy import text
-
-    log = logging.getLogger("infrawatch.db")
-    try:
-        with engine.begin() as c:
-            c.execute(text("CREATE EXTENSION IF NOT EXISTS timescaledb"))
-    except Exception as exc:  # plain PostgreSQL: the schema works without it
-        log.info("TimescaleDB not available, using plain PostgreSQL tables (%s)", type(exc).__name__)
-        return
-    for table in ("metrics", "service_checks"):
-        try:
-            with engine.begin() as c:
-                c.execute(text(f"SELECT create_hypertable('{table}', 'ts', if_not_exists => TRUE, migrate_data => TRUE)"))
-        except Exception as exc:
-            log.warning("could not create hypertable %s: %s", table, exc)
