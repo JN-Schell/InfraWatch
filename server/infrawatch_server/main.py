@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import logging
 import os
 from datetime import timedelta
@@ -24,6 +25,17 @@ from .routers import admin, agents, alerts_api, auth, hosts
 from .security import hash_password, new_secret
 
 log = logging.getLogger("infrawatch")
+
+
+class JsonFormatter(logging.Formatter):
+    """One valid JSON object per line, regardless of quotes/newlines in the message; includes exceptions."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        d = {"ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"), "level": record.levelname,
+             "logger": record.name, "msg": record.getMessage()}
+        if record.exc_info:
+            d["exc"] = self.formatException(record.exc_info)
+        return json.dumps(d)
 
 
 def _write_initial_password(path: Path, password: str) -> None:
@@ -169,6 +181,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 def app_factory() -> FastAPI:  # uvicorn --factory infrawatch_server.main:app_factory
-    logging.basicConfig(level=os.getenv("INFRAWATCH_LOG_LEVEL", "INFO"),
-                        format='{"ts":"%(asctime)s","level":"%(levelname)s","logger":"%(name)s","msg":"%(message)s"}')
+    handler = logging.StreamHandler()
+    handler.setFormatter(JsonFormatter())
+    logging.basicConfig(level=os.getenv("INFRAWATCH_LOG_LEVEL", "INFO"), handlers=[handler], force=True)
     return create_app()

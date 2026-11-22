@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 Initial development. Version `0.1.0` is the working version in the code but has **not yet been tagged or released** (tracked in #21).
 
+### Fixed
+- Server logs are always valid JSON (quotes, newlines, exceptions) via a proper formatter (#34).
+
 ### Added
 - `compose-smoke` CI job and `scripts/compose_smoke.sh`: brings up the Compose stack, enrolls a real agent over HTTP and over the Caddy TLS profile (with `ca_bundle`) and asserts the host goes online; also checks read-only rootfs and non-root (#2).
 - Central FastAPI server with REST API, PostgreSQL/TimescaleDB-ready schema and static dashboard hosting (#22).
