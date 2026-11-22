@@ -211,3 +211,36 @@ def test_rule_with_null_threshold_is_ignored_not_crashing(client, admin, app):
     st = run(app)
     assert st["opened"] == 1  # only the valid rule fired
     assert [a["title"] for a in alerts(client, admin)] == ["CPU high on web-1"]
+
+
+def test_query_count_does_not_grow_with_fleet(client, admin, app):
+    """#36: queries per steady-state evaluation cycle are independent of hosts x rules."""
+    from sqlalchemy import event
+
+    checks = [{"name": "web", "kind": "http", "target": "http://x", "ok": False, "response_ms": 5, "error": "boom"}]
+
+    def add_hosts(prefix, n):
+        for i in range(n):
+            _, key = register_host(client, admin, hostname=f"{prefix}{i}")
+            push(client, key, sample(cpu=95, checks=checks))
+
+    def cycle_queries():
+        run(app)  # warm-up: opens any new alerts
+        n = []
+        eng = app.state.db.engine
+        counter = lambda *a, **k: n.append(1)  # noqa: E731
+        event.listen(eng, "before_cursor_execute", counter)
+        try:
+            run(app)
+        finally:
+            event.remove(eng, "before_cursor_execute", counter)
+        return len(n)
+
+    for t in ("cpu_high", "mem_high", "disk_low", "host_down", "service_down", "response_slow"):
+        rule(client, admin, name=t, type=t, threshold=None if t in ("host_down", "service_down") else 1)
+    add_hosts("a", 2)
+    small = cycle_queries()
+    add_hosts("b", 6)
+    large = cycle_queries()
+    assert large == small, (small, large)
+    assert small < 20, small

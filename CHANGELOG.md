@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 Initial development. Version `0.1.0` is the working version in the code but has **not yet been tagged or released** (tracked in #21).
 
+### Changed
+- Alert evaluation loads metrics, service checks, open alerts, maintenance windows and recent resolutions once per cycle instead of per rule x host; query count per cycle no longer grows with fleet size (#36).
+
 ### Fixed
 - Server logs are always valid JSON (quotes, newlines, exceptions) via a proper formatter (#34).
 
